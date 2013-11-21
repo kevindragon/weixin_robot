@@ -13,16 +13,14 @@ const (
 	TypeNone        = 0
 	TypeLegislation = 1 << (iota - 1)
 	TypeCase
-	TypeContract
-	TypePracticalMaterial
+	TypeArticle
 )
 
 func getContentType(exp string) int {
 	m := map[string]int{
 		"法规": TypeLegislation,
 		"案例": TypeCase,
-		"合同": TypeContract,
-		"资料": TypePracticalMaterial,
+		"评论": TypeArticle,
 	}
 	if found, ok := m[exp]; ok {
 		return found
@@ -32,10 +30,9 @@ func getContentType(exp string) int {
 
 func getAutnDatabaseName(t int) string {
 	m := map[int]string{
-		TypeLegislation:       "law",
-		TypeCase:              "case",
-		TypeContract:          "contract",
-		TypePracticalMaterial: "pgl_content",
+		TypeLegislation: "law",
+		TypeCase:        "case",
+		TypeArticle:     "hotnews,ip_hottopic,ep_news_law,ep_news_case",
 	}
 	if found, ok := m[t]; ok {
 		return found
@@ -45,10 +42,9 @@ func getAutnDatabaseName(t int) string {
 
 func getContentTypeText(ct int) string {
 	m := map[int]string{
-		TypeLegislation:       "法规",
-		TypeCase:              "案例",
-		TypeContract:          "合同",
-		TypePracticalMaterial: "资料",
+		TypeLegislation: "法规",
+		TypeCase:        "案例",
+		TypeArticle:     "评论文章",
 	}
 	if found, ok := m[ct]; ok {
 		return found

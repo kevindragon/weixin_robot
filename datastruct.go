@@ -4,13 +4,18 @@ import (
 	"encoding/xml"
 )
 
-// 文本消息基本内容
-type TextMessage struct {
+type BaseMessage struct {
+	XMLName      xml.Name `xml:"xml"`
 	ToUserName   string
 	FromUserName string
-	CreateTime   int
+	CreateTime   int64
 	MsgType      string
-	Content      string
+}
+
+// 文本消息基本内容
+type TextMessage struct {
+	BaseMessage
+	Content string
 }
 
 // 接收到的消息
@@ -21,11 +26,7 @@ type TextMessageReceived struct {
 
 // 图文消息
 type NewsMessage struct {
-	XMLName      xml.Name `xml:"xml"`
-	ToUserName   string
-	FromUserName string
-	CreateTime   int64
-	MsgType      string
+	BaseMessage
 	ArticleCount int
 	Articles     NewsMessageArtice
 }
@@ -39,6 +40,12 @@ type NewsMessageItem struct {
 	Description string
 	PicUrl      string
 	Url         string
+}
+
+// 事件消息
+type SubscribeEventMessage struct {
+	BaseMessage
+	Event string
 }
 
 type AutnResponse struct {

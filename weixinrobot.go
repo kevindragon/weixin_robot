@@ -39,11 +39,23 @@ func search(w http.ResponseWriter, r *http.Request) {
 	msgRcv := TextMessageReceived{}
 	xml.Unmarshal(b, &msgRcv)
 
+	log.Println("message", msgRcv)
+
 	if msgRcv.MsgType == "text" {
-		log.Println("content", msgRcv.Content)
+		msgContent := strings.Trim(msgRcv.Content, " ")
+		if msgContent == "帮助" || msgContent == "?" || msgContent == "？" {
+			helpMsgXml, err := genTextMsgContent(msgRcv.ToUserName, msgRcv.FromUserName, helpMessage())
+			if err != nil {
+				log.Println("generate help message xml error.", err)
+			}
+			log.Println("helpMsgXml", string(helpMsgXml))
+			fmt.Fprintf(w, string(helpMsgXml))
+			return
+		}
+
 		articles := [][]string{}
 
-		keyword := msgRcv.Content
+		keyword := msgContent
 		keywordRune := []rune(keyword)
 
 		sct := readContentType(msgRcv.FromUserName)
@@ -82,7 +94,5 @@ func search(w http.ResponseWriter, r *http.Request) {
 
 		log.Println("xmlb", string(xmlb))
 		fmt.Fprintf(w, string(xmlb))
-	} else {
-		log.Println("message-type", msgRcv.MsgType)
 	}
 }

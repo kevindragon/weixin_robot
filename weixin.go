@@ -56,6 +56,21 @@ func genMsgContent(msgRcv TextMessageReceived, articles [][]string, scope string
 	return b, nil
 }
 
+func genTextMsgContent(from, to, content string) ([]byte, error) {
+	textMsg := TextMessage{
+		ToUserName:   to,
+		FromUserName: from,
+		CreateTime:   time.Now().Unix(),
+		MsgType:      "text",
+		Content:      content,
+	}
+	b, err := xml.Marshal(textMsg)
+	if err != nil {
+		return []byte(""), err
+	}
+	return b, nil
+}
+
 func validateSource(r *http.Request) bool {
 	r.ParseForm()
 	signature := r.Form.Get("signature")
@@ -105,4 +120,20 @@ func readContentType(user string) int {
 		return ct
 	}
 	return ct
+}
+
+func helpMessage() string {
+	return `律商联讯微信公众平台使用说明：
+
+目前支持查看本帮助，法规、案例、评论文章的检索
+
+输入“帮助”或者“?”(不含双引号)查看本帮助
+
+检索请求为：命令 关键词。例如搜索法规公司法：
+搜法规 公司法
+
+全部命令如下：
+搜法规
+搜案例
+搜评论`
 }
