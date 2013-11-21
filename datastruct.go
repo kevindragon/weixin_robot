@@ -5,7 +5,6 @@ import (
 )
 
 type BaseMessage struct {
-	XMLName      xml.Name `xml:"xml"`
 	ToUserName   string
 	FromUserName string
 	CreateTime   int64
@@ -14,6 +13,7 @@ type BaseMessage struct {
 
 // 文本消息基本内容
 type TextMessage struct {
+	XMLName xml.Name `xml:"xml"`
 	BaseMessage
 	Content string
 }
@@ -26,6 +26,7 @@ type TextMessageReceived struct {
 
 // 图文消息
 type NewsMessage struct {
+	XMLName xml.Name `xml:"xml"`
 	BaseMessage
 	ArticleCount int
 	Articles     NewsMessageArtice

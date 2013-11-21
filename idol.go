@@ -18,9 +18,9 @@ const (
 
 func getContentType(exp string) int {
 	m := map[string]int{
-		"法规": TypeLegislation,
-		"案例": TypeCase,
-		"评论": TypeArticle,
+		"搜法规": TypeLegislation,
+		"搜案例": TypeCase,
+		"搜评论": TypeArticle,
 	}
 	if found, ok := m[exp]; ok {
 		return found

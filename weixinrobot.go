@@ -31,13 +31,13 @@ func search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 读取信息内容
-	b, err := ioutil.ReadAll(r.Body)
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Println("Read body", err)
 		return
 	}
 	msgRcv := TextMessageReceived{}
-	xml.Unmarshal(b, &msgRcv)
+	xml.Unmarshal(body, &msgRcv)
 
 	log.Println("message", msgRcv)
 
@@ -59,7 +59,12 @@ func search(w http.ResponseWriter, r *http.Request) {
 		keywordRune := []rune(keyword)
 
 		sct := readContentType(msgRcv.FromUserName)
-		ct := getContentType(string(keywordRune[:2]))
+		var ct int
+		if len(keywordRune) >= 3 {
+			ct = getContentType(string(keywordRune[:3]))
+		} else {
+			ct = getContentType(string(keywordRune))
+		}
 		var db string
 		if ct == TypeNone {
 			if sct == TypeNone {
@@ -71,7 +76,11 @@ func search(w http.ResponseWriter, r *http.Request) {
 		} else {
 			db = getAutnDatabaseName(ct)
 			if len(keywordRune) > 2 {
-				keyword = strings.Trim(string(keywordRune[2:]), " ")
+				if len(keywordRune) >= 3 {
+					keyword = strings.Trim(string(keywordRune[3:]), " ")
+				} else {
+					keyword = strings.Trim(string(keywordRune), "")
+				}
 			}
 			if ct != sct {
 				saveContentType(msgRcv.FromUserName, ct)
@@ -80,7 +89,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 
 		log.Println("content_type", ct, sct, db, keyword)
 
-		if "/:" != msgRcv.Content[:2] {
+		if "/:" != keyword {
 			articles, _ = getTitles(keyword, db)
 		}
 
@@ -94,5 +103,12 @@ func search(w http.ResponseWriter, r *http.Request) {
 
 		log.Println("xmlb", string(xmlb))
 		fmt.Fprintf(w, string(xmlb))
+	} else if msgRcv.MsgType == "event" {
+		eventMsgRcv := SubscribeEventMessage{}
+		xml.Unmarshal(body, &eventMsgRcv)
+		log.Println(eventMsgRcv)
+		if eventMsgRcv.Event == "subscribe" {
+			sendHelp(w, eventMsgRcv.FromUserName, eventMsgRcv.ToUserName)
+		}
 	}
 }

@@ -42,10 +42,12 @@ func genMsgContent(msgRcv TextMessageReceived, articles [][]string, scope string
 	}
 	newsMsg := NewsMessage{
 		xml.Name{"", "xml"},
-		msgRcv.FromUserName,
-		msgRcv.ToUserName,
-		time.Now().Unix(),
-		"news",
+		BaseMessage{
+			msgRcv.FromUserName,
+			msgRcv.ToUserName,
+			time.Now().Unix(),
+			"news",
+		},
 		articleCount,
 		newsMsgArticle,
 	}
@@ -58,11 +60,9 @@ func genMsgContent(msgRcv TextMessageReceived, articles [][]string, scope string
 
 func genTextMsgContent(from, to, content string) ([]byte, error) {
 	textMsg := TextMessage{
-		ToUserName:   to,
-		FromUserName: from,
-		CreateTime:   time.Now().Unix(),
-		MsgType:      "text",
-		Content:      content,
+		xml.Name{"", "xml"},
+		BaseMessage{to, from, time.Now().Unix(), "text"},
+		content,
 	}
 	b, err := xml.Marshal(textMsg)
 	if err != nil {
@@ -120,6 +120,15 @@ func readContentType(user string) int {
 		return ct
 	}
 	return ct
+}
+
+func sendHelp(w io.Writer, to, from string) {
+	helpMsgXml, err := genTextMsgContent(from, to, helpMessage())
+	if err != nil {
+		log.Println("generate help message xml error.", err)
+	}
+	log.Println("helpMsgXml", string(helpMsgXml))
+	fmt.Fprintf(w, string(helpMsgXml))
 }
 
 func helpMessage() string {
