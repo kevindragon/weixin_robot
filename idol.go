@@ -56,7 +56,8 @@ func getTitles(keyword, db string) ([][]string, error) {
 	autnResp := AutnResponse{}
 	url := "http://192.168.2.210:9003/a=query&databasematch=%s" +
 		"&sort=relevance+power_level:numberincreasing+date&print=none" +
-		"&text=(%s):dretitle:articleid+OR+(%s):tags"
+		"&text=(%s):dretitle:drecontent:source:author:authorsource:articleid" +
+		"+OR+(%s):tags"
 	url = fmt.Sprintf(url, db, keyword, keyword)
 	log.Println("url", url)
 	resp, err := http.Get(url)
