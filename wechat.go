@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+const Token = "mumuxiaoxiaohai"
+
 const DataDir = "data/"
 
 func genMsgContent(msgRcv TextMessageReceived, articles [][]string, scope string) ([]byte, error) {

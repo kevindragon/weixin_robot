@@ -3,112 +3,108 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 )
 
-var Token = "mumuxiaoxiaohai"
+type CmdFunc func(io.Writer, TextMessageReceived)
 
-func main() {
-	http.HandleFunc("/", search)
-	log.Println("listen port 8044.")
-	err := http.ListenAndServe(":8044", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
-}
-
-func search(w http.ResponseWriter, r *http.Request) {
+func cmdRoute(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	echostr := r.Form.Get("echostr")
-
 	// validate source
 	if !validateSource(r) {
-		log.Println("validate failed.", echostr)
 		return
 	}
 
 	// 读取信息内容
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Println("Read body", err)
+		log.Println("Read message body error.", err)
 		return
 	}
-	msgRcv := TextMessageReceived{}
-	xml.Unmarshal(body, &msgRcv)
+	rcvMsg := BaseMessage{}
+	xml.Unmarshal(body, &rcvMsg)
+	fmt.Println("BaseMessage", rcvMsg)
 
-	log.Println("message", msgRcv)
+	if rcvMsg.MsgType == "text" {
+		textMsgRcv := TextMessageReceived{}
+		xml.Unmarshal(body, &textMsgRcv)
+		cmd := parseCmd([]byte(textMsgRcv.Content))
 
-	if msgRcv.MsgType == "text" {
-		msgContent := strings.Trim(msgRcv.Content, " ")
-		if msgContent == "帮助" || msgContent == "?" || msgContent == "？" {
-			helpMsgXml, err := genTextMsgContent(msgRcv.ToUserName, msgRcv.FromUserName, helpMessage())
-			if err != nil {
-				log.Println("generate help message xml error.", err)
-			}
-			log.Println("helpMsgXml", string(helpMsgXml))
-			fmt.Fprintf(w, string(helpMsgXml))
+		textCmdRouter := map[int]CmdFunc{
+			CmdSearch: search,
+			CmdHelp:   help,
+		}
+
+		if f, ok := textCmdRouter[cmd]; ok {
+			f(w, textMsgRcv)
 			return
 		}
 
-		articles := [][]string{}
-
-		keyword := msgContent
-		keywordRune := []rune(keyword)
-
-		sct := readContentType(msgRcv.FromUserName)
-		var ct int
-		if len(keywordRune) >= 3 {
-			ct = getContentType(string(keywordRune[:3]))
-		} else {
-			ct = getContentType(string(keywordRune))
-		}
-		var db string
-		if ct == TypeNone {
-			if sct == TypeNone {
-				db = "law"
-			} else {
-				ct = sct
-				db = getAutnDatabaseName(sct)
-			}
-		} else {
-			db = getAutnDatabaseName(ct)
-			if len(keywordRune) > 2 {
-				if len(keywordRune) >= 3 {
-					keyword = strings.Trim(string(keywordRune[3:]), " ")
-				} else {
-					keyword = strings.Trim(string(keywordRune), "")
-				}
-			}
-			if ct != sct {
-				saveContentType(msgRcv.FromUserName, ct)
-			}
-		}
-
-		log.Println("content_type", ct, sct, db, keyword)
-
-		if "/:" != keyword {
-			articles, _ = getTitles(keyword, db)
-		}
-
-		scope := getContentTypeText(ct)
-
-		xmlb, err := genMsgContent(msgRcv, articles, scope)
-		if err != nil {
-			log.Println("Generate xml error.", err)
-			return
-		}
-
-		log.Println("xmlb", string(xmlb))
-		fmt.Fprintf(w, string(xmlb))
-	} else if msgRcv.MsgType == "event" {
+		fmt.Println("cmd", cmd)
+	} else if rcvMsg.MsgType == "event" {
 		eventMsgRcv := SubscribeEventMessage{}
 		xml.Unmarshal(body, &eventMsgRcv)
-		log.Println(eventMsgRcv)
+
+		fmt.Println("event message", eventMsgRcv)
+
 		if eventMsgRcv.Event == "subscribe" {
 			sendHelp(w, eventMsgRcv.FromUserName, eventMsgRcv.ToUserName)
 		}
+	}
+}
+
+func search(w io.Writer, rcvMsg TextMessageReceived) {
+	msgContent := strings.Trim(rcvMsg.Content, " ")
+
+	articles := [][]string{}
+
+	sct := readContentType(rcvMsg.FromUserName)
+	ct, keyword := parseSearchCmd([]byte(msgContent))
+
+	fmt.Println("ct keyword", ct, keyword)
+
+	db := "law"
+	if ct != TypeNone {
+		db = getAutnDatabaseName(ct)
+	} else if sct != TypeNone {
+		db = getAutnDatabaseName(sct)
+	}
+	if ct != sct {
+		saveContentType(rcvMsg.FromUserName, ct)
+	}
+
+	log.Println("content_type", ct, sct, db, keyword)
+
+	if "/:" != keyword {
+		articles, _ = getTitles(keyword, db)
+	}
+
+	scopeText := getContentTypeText(ct)
+
+	xmlb, err := genMsgContent(rcvMsg, articles, scopeText)
+	if err != nil {
+		log.Println("Generate xml error.", err)
+		return
+	}
+
+	log.Println("xmlb", string(xmlb))
+	fmt.Fprintf(w, string(xmlb))
+}
+
+func help(w io.Writer, rcvMsg TextMessageReceived) {
+	sendHelp(w, rcvMsg.FromUserName, rcvMsg.ToUserName)
+}
+
+func main() {
+	http.HandleFunc("/", cmdRoute)
+	http.HandleFunc("/accountbindform", accountBindForm)
+	log.Println("listen port 8044.")
+	err := http.ListenAndServe(":8044", nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
 	}
 }

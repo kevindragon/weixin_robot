@@ -43,6 +43,8 @@ type NewsMessageItem struct {
 	Url         string
 }
 
+type WechatMessager interface{}
+
 // 事件消息
 type SubscribeEventMessage struct {
 	BaseMessage

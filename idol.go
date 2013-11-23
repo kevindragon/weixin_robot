@@ -16,37 +16,41 @@ const (
 	TypeArticle
 )
 
+var ContentTypeMap = map[string]int{
+	"搜法规": TypeLegislation,
+	"搜案例": TypeCase,
+	"搜评论": TypeArticle,
+}
+
+var ContentTypeDBMap = map[int]string{
+	TypeLegislation: "law",
+	TypeCase:        "case",
+	TypeArticle:     "hotnews,ip_hottopic,ep_news_law,ep_news_case",
+}
+
+var ContentTypeTextMap = map[int]string{
+	TypeLegislation: "法规",
+	TypeCase:        "案例",
+	TypeArticle:     "评论文章",
+}
+
+// 获取exp所对应的内容类型
 func getContentType(exp string) int {
-	m := map[string]int{
-		"搜法规": TypeLegislation,
-		"搜案例": TypeCase,
-		"搜评论": TypeArticle,
-	}
-	if found, ok := m[exp]; ok {
+	if found, ok := ContentTypeMap[exp]; ok {
 		return found
 	}
 	return TypeNone
 }
 
 func getAutnDatabaseName(t int) string {
-	m := map[int]string{
-		TypeLegislation: "law",
-		TypeCase:        "case",
-		TypeArticle:     "hotnews,ip_hottopic,ep_news_law,ep_news_case",
-	}
-	if found, ok := m[t]; ok {
+	if found, ok := ContentTypeDBMap[t]; ok {
 		return found
 	}
 	return "law"
 }
 
 func getContentTypeText(ct int) string {
-	m := map[int]string{
-		TypeLegislation: "法规",
-		TypeCase:        "案例",
-		TypeArticle:     "评论文章",
-	}
-	if found, ok := m[ct]; ok {
+	if found, ok := ContentTypeTextMap[ct]; ok {
 		return found
 	}
 	return "法规"
