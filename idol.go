@@ -56,7 +56,7 @@ func getContentTypeText(ct int) string {
 	return "法规"
 }
 
-func getTitles(keyword, db string) ([][]string, error) {
+func getArticles(keyword, db string) ([][]string, error) {
 	autnResp := AutnResponse{}
 	url := "http://192.168.2.210:9003/a=query&databasematch=%s" +
 		"&sort=relevance+power_level:numberincreasing+date&print=none" +
@@ -83,7 +83,7 @@ func getTitles(keyword, db string) ([][]string, error) {
 	}
 
 	for _, hit := range autnResp.Respdata.Hits {
-		article := []string{hit.Title, hit.Reference}
+		article := []string{hit.Title, "https://hk.lexiscn.com/" + hit.Reference}
 		articles = append(articles, article)
 	}
 

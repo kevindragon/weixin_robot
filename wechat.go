@@ -20,24 +20,27 @@ const Token = "mumuxiaoxiaohai"
 
 const DataDir = "data/"
 
-func genMsgContent(msgRcv TextMessageReceived, articles [][]string, scope string) ([]byte, error) {
-	articleCount := len(articles) + 1
+func genTeleTextMsgContent(msgRcv TextMessageReceived, articles [][]string) ([]byte, error) {
+	articleCount := len(articles)
 	newsMsgItems := make([]NewsMessageItem, articleCount)
-	newsMsgItems[0] = NewsMessageItem{
-		xml.Name{"", "item"}, "范围:" + scope + "  搜索结果", "", "", "",
-	}
-	if articleCount > 1 {
+
+	if articleCount > 0 {
 		for i, article := range articles {
-			newsMsgItems[i+1] = NewsMessageItem{
-				xml.Name{"", "item"}, article[0], "", "",
-				"http://www.lexiscn.com/" + strings.Trim(article[1], "/")}
+			url := ""
+			if article[1] != "" {
+				url = article[1]
+			}
+			newsMsgItems[i] = NewsMessageItem{
+				xml.Name{"", "item"},
+				article[0], "", "", url,
+			}
 		}
 	} else {
 		tmpNewsMsgItem := NewsMessageItem{
 			xml.Name{"", "item"}, "无结果", "", "", "",
 		}
 		newsMsgItems = append(newsMsgItems, tmpNewsMsgItem)
-		articleCount += 1
+		articleCount = 1
 	}
 	newsMsgArticle := NewsMessageArtice{
 		xml.Name{"", "Articles"}, newsMsgItems,
